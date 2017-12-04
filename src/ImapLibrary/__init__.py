@@ -129,11 +129,20 @@ class ImapLibrary(object):
         if self._is_walking_multipart(email_index):
             body = self.get_multipart_payload(decode=True)
         else:
-            body = self._imap.uid('fetch',
-                                  email_index,
-                                  '(BODY[TEXT])')[1][0][1].\
-                decode('quoted-printable')
+            body = self._fetch_email_by_uid(email_index, '(BODY[TEXT])')
         return body
+
+    def get_full_email(self, email_index):
+        """Returns the decoded email header and body,
+
+        Arguments:
+        - ``email_index``: An email index to identity the email message.
+
+        Examples:
+        | Get Full Email | INDEX |
+        """
+        email = self._fetch_email_by_uid(email_index, '(BODY[])')
+        return email
 
     def get_links_from_email(self, email_index):
         """Returns all links found in the email body from given ``email_index``.
@@ -403,3 +412,7 @@ class ImapLibrary(object):
         self._email_index = email_index
         self._mp_msg = msg
         self._mp_iter = msg.walk()
+
+    def _fetch_email_by_uid(self, email_index, command):
+        email = self._imap.uid('fetch', email_index, command)[1][0][1].decode('quoted-printable')
+        return email
